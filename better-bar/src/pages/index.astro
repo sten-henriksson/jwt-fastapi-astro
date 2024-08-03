@@ -1,0 +1,113 @@
+---
+let username = "";
+let password = "";
+let token = "";
+let userData = null;
+let error = "";
+---
+
+<html>
+  <head>
+    <title>Login</title>
+  </head>
+  <body>
+    <h1>Login</h1>
+    <div>
+      <label for="username">Username:</label>
+      <input
+        type="text"
+        id="username"
+        name="username"
+        oninput="username = this.value"
+      />
+    </div>
+    <div>
+      <label for="password">Password:</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        oninput="password = this.value"
+      />
+    </div>
+    <button id="login-button">Login</button>
+    <p id="error" style="color: red;"></p>
+
+    <div id="user-info"></div>
+
+    <script>
+      // Ensure the variables are declared inside the script tag
+      let username = "";
+      let password = "";
+      let token = "";
+      let userData = null;
+      let error = "";
+
+      async function handleLogin() {
+        error = "";
+        try {
+			const response = await fetch('http://127.0.0.1:8000/token', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded',
+  },
+  body: "username=user@example.com&password=password"
+,
+});
+
+
+
+          if (response.ok) {
+            const data = await response.json();
+            token = data.access_token;
+            await fetchUserData(token);
+          } else {
+            const errorData = await response.json();
+            error = errorData.detail || "Login failed";
+          }
+        } catch (err) {
+          error = "Login failed: " + err.message;
+        }
+        render();
+      }
+
+      async function fetchUserData(token) {
+        try {
+          const response = await fetch("http://127.0.0.1:8000/users/me", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (response.ok) {
+            userData = await response.json();
+          } else {
+            const errorData = await response.json();
+            error = errorData.detail || "Failed to fetch user data";
+          }
+        } catch (err) {
+          error = "Failed to fetch user data: " + err.message;
+        }
+        render();
+      }
+
+      function render() {
+        document.getElementById("error").textContent = error;
+        if (userData) {
+          document.getElementById("user-info").innerHTML = `
+            <h2>User Info</h2>
+            <p>Username: ${userData.username}</p>
+            <p>Full Name: ${userData.full_name}</p>
+          `;
+        } else {
+          document.getElementById("user-info").innerHTML = "";
+        }
+      }
+
+      // Ensure the function is connected to the button click after the DOM is fully loaded
+      document
+        .getElementById("login-button")
+        .addEventListener("click", handleLogin);
+    </script>
+  </body>
+</html>
